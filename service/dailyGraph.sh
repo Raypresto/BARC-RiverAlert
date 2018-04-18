@@ -4,17 +4,17 @@ SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
   TARGET="$(readlink "$SOURCE")"
   if [[ $SOURCE == /* ]]; then
-SOURCE="$TARGET"
+    SOURCE="$TARGET"
   else
-DIR="$( dirname "$SOURCE" )"
-SOURCE="$DIR/$TARGET"
+    DIR="$( dirname "$SOURCE" )"
+    SOURCE="$DIR/$TARGET"
   fi
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 DIR="$(dirname $DIR)"
 
-
-$virtualenv --system-site-packages $DIR/env
 source $DIR/env/bin/activate
-$DIR/env/bin/pip install python-twitter
-$DIR/env/bin/pip install matplotlib
+export ETC=$DIR/etc
+
+python $DIR/lib/dailyGraph.py
+

@@ -5,6 +5,7 @@ import sys
 import os
 from os import environ
 import json
+import datetime
 
 historyFile = os.path.join(os.path.dirname(__file__), 'riverLevel.csv')
 
@@ -15,17 +16,17 @@ class Twitter(object):
 		with open(configFile, 'r') as _f:
 			self.config = json.loads(_f.read())
 	
-	def tweet(self, message):
+	def tweet(self, message, media=None):
 		api = twitter.Api(consumer_key=self.config['consumerKey'], consumer_secret=self.config['consumerSecret'],
                		access_token_key=self.config['accessToken'], access_token_secret=self.config['accessTokenSecret'],
            		input_encoding='utf-8')
 		try:
-			status = api.PostUpdate(message)
+			status = api.PostUpdate(message, media)
 		except UnicodeDecodeError:
 			print 'error with message'
 			print message
 			sys.exit(2)
-		print 'posted to twitter: ', message
+		return
 
 
 def read_csv():
@@ -49,10 +50,12 @@ def write_csv(time, level):
 
 def checkWater():
 	history = read_csv()
+	history['level'] = float(history['level'])
         data = requests.get(url='http://environment.data.gov.uk/flood-monitoring/id/stations/L1607')
         json_data = data.json()
         time = json_data['items']['measures']['latestReading']['dateTime']
-        level = json_data['items']['measures']['latestReading']['value']
+        level = float(json_data['items']['measures']['latestReading']['value'])
+	
         if time != history['time']:
 		if history['level'] > level:
 			msg = 'River level is at %sM and falling.' % level
@@ -60,14 +63,13 @@ def checkWater():
 			msg = 'River level is at %sM and rising.' % level
 		else:
                		msg = 'River level is at %sM and stable.' % level
-		if float(level) >= 0.9:
+		if level >= 0.9:
 			msg += ' Water looks a bit high for rowing.'
 		else:
 			msg += ' Water looks ok for rowing.'
 		tweeter = Twitter()
 		tweeter.tweet(msg)
                 write_csv(time, level)
-
 
 if __name__ == '__main__':
 	checkWater()
